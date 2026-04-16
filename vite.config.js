@@ -7,9 +7,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/astrometry': {
-        target: 'http://nova.astrometry.net/api',
+        target: 'https://nova.astrometry.net/api',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/astrometry/, '')
+        rewrite: (path) => path.replace(/^\/api\/astrometry/, ''),
+        headers: {
+          'Referer': 'https://nova.astrometry.net/api/login'
+        }
       }
     }
   }

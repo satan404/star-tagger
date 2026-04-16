@@ -69,6 +69,13 @@ const scanImage = async () => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `request-json=${encodeURIComponent(JSON.stringify({ apikey: userApiKey.value }))}`
     })
+    
+    if (!loginRes.ok) {
+      const text = await loginRes.text()
+      console.error('Login error response:', text)
+      throw new Error(`登入伺服器回應異常 (${loginRes.status})`)
+    }
+
     const loginData = await loginRes.json()
     if (loginData.status !== 'success') throw new Error('登入失敗，請檢查 API Key')
     const session = loginData.session
@@ -86,6 +93,13 @@ const scanImage = async () => {
       method: 'POST',
       body: formData
     })
+    
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text()
+      console.error('Upload error response:', text)
+      throw new Error(`上傳伺服器回應異常 (${uploadRes.status})`)
+    }
+
     const uploadData = await uploadRes.json()
     if (uploadData.status !== 'success') throw new Error('上傳失敗')
     const subId = uploadData.subid
@@ -97,6 +111,8 @@ const scanImage = async () => {
     for (let i = 0; i < 40; i++) { // Max 200s
       await new Promise(r => setTimeout(r, 5000))
       const subRes = await fetch(`/api/astrometry/submissions/${subId}`)
+      if (!subRes.ok) continue
+      
       const subStatus = await subRes.json()
       
       if (subStatus.job_calibrations && subStatus.job_calibrations.length > 0) {

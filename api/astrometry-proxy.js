@@ -1,58 +1,45 @@
-// api/astrometry-proxy.js
-// 這是 Vercel 的 Serverless Function，用於代理 Astrometry.net API 並加入安全標頭。
+const https = require('https');
 
-export default async function handler(req, res) {
-  // 從查詢參數或路徑獲取目標路徑
-  // 注意：我們將轉發所有的 path 與 query
-  const targetUrl = new URL(req.url, `http://${req.headers.host}`);
-  const apiPath = targetUrl.pathname.replace('/api/astrometry-proxy', '');
-  const destination = `https://nova.astrometry.net/api${apiPath}${targetUrl.search}`;
+// 停用 Vercel 預設的 Body Parser，這對處理圖片上傳（multipart/form-data）至關重要
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
-  const headers = {
-    'Referer': 'https://nova.astrometry.net/api/login',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'application/json'
+export default function handler(req, res) {
+  // 解析目標 URL
+  const targetUrl = req.url.replace('/api/astrometry-proxy', '');
+  const destination = `https://nova.astrometry.net/api${targetUrl}`;
+
+  const options = {
+    method: req.method,
+    headers: {
+      // 移除可能導致 CSRF 報錯的 Referer (只限 API 呼叫時)
+      // 使用簡潔的 API 用戶端識別，避免被判定為偽造的瀏覽器表單
+      'User-Agent': 'StellarTagger/1.0 (https://star-tagger.vercel.app)',
+      'Accept': 'application/json',
+      // 轉發原始請求的所有其他 Headers (包含 Content-Type, Content-Length)
+      ...Object.fromEntries(
+        Object.entries(req.headers).filter(([key]) => 
+          !['host', 'referer', 'user-agent', 'cookie'].includes(key.toLowerCase())
+        )
+      )
+    }
   };
 
-  // 複製原始請求的 Content-Type (用於上傳)
-  if (req.headers['content-type']) {
-    headers['Content-Type'] = req.headers['content-type'];
-  }
+  const proxyReq = https.request(destination, options, (proxyRes) => {
+    // 轉發回應狀態與標頭
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    // 串流轉發回應內容
+    proxyRes.pipe(res);
+  });
 
-  try {
-    const fetchOptions = {
-      method: req.method,
-      headers: headers,
-    };
+  proxyReq.on('error', (e) => {
+    console.error('Proxy Request Error:', e);
+    res.status(500).json({ error: 'Proxy failed', message: e.message });
+  });
 
-    // 如果有 Body，轉發 Body
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      // 在 Vercel 中，req 已經被解析過，但我們可以直接轉發
-      // 對於 FormData 上傳，我們可能需要特殊處理，
-      // 但簡單起見，我們先嘗試轉發。
-      fetchOptions.body = req.body;
-      
-      // 注意：如果 req.body 是物件，需要轉為字串
-      if (typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
-        // 特別處理 Astrometry 的 x-www-form-urlencoded 要求
-        if (headers['Content-Type']?.includes('application/x-www-form-urlencoded')) {
-          const params = new URLSearchParams();
-          for (const key in req.body) {
-            params.append(key, req.body[key]);
-          }
-          fetchOptions.body = params.toString();
-        } else {
-          fetchOptions.body = JSON.stringify(req.body);
-        }
-      }
-    }
-
-    const response = await fetch(destination, fetchOptions);
-    const data = await response.text();
-
-    res.status(response.status).send(data);
-  } catch (error) {
-    console.error('Proxy error:', error);
-    res.status(500).json({ status: 'error', message: error.message });
-  }
+  // 串流轉發請求內容 (確保圖片上傳等二進制數據完整)
+  req.pipe(proxyReq);
 }

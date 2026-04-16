@@ -9,10 +9,7 @@ export default defineConfig({
       '/api/astrometry': {
         target: 'https://nova.astrometry.net/api',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/astrometry/, ''),
-        headers: {
-          'Referer': 'https://nova.astrometry.net/api/login'
-        }
+        rewrite: (path) => path.replace(/^\/api\/astrometry/, '')
       }
     }
   }

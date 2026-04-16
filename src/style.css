@@ -1,0 +1,115 @@
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0c0c14;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+}
+
+.header {
+  grid-area: header;
+  background: rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  background: #161625;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.main {
+  grid-area: main;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #1a1a2e 0%, #0c0c14 100%);
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #2a2a4a;
+  cursor: pointer;
+  transition: all 0.25s;
+  color: #fff;
+}
+button:hover {
+  border-color: #646cff;
+  background-color: #3b3b6b;
+}
+button:active {
+  transform: scale(0.98);
+}
+button.primary {
+  background-color: #646cff;
+}
+button.primary:hover {
+  background-color: #7a81ff;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  color: white;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #646cff;
+}

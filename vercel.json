@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/astrometry/:path*",
+      "destination": "https://nova.astrometry.net/api/:path*"
+    }
+  ]
+}

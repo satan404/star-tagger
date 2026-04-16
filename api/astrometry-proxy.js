@@ -15,14 +15,13 @@ export default function handler(req, res) {
   const options = {
     method: req.method,
     headers: {
-      // 移除可能導致 CSRF 報錯的 Referer (只限 API 呼叫時)
-      // 使用簡潔的 API 用戶端識別，避免被判定為偽造的瀏覽器表單
-      'User-Agent': 'StellarTagger/1.0 (https://star-tagger.vercel.app)',
-      'Accept': 'application/json',
-      // 轉發原始請求的所有其他 Headers (包含 Content-Type, Content-Length)
+      // 轉發瀏覽器的 User-Agent，避免被 Apache/Cloudflare 判定為 Bot 而回傳 503
+      'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': req.headers['accept'] || 'application/json',
+      // 其他必要標頭
       ...Object.fromEntries(
         Object.entries(req.headers).filter(([key]) => 
-          !['host', 'referer', 'user-agent', 'cookie'].includes(key.toLowerCase())
+          !['host', 'referer', 'user-agent', 'accept', 'cookie'].includes(key.toLowerCase())
         )
       )
     }

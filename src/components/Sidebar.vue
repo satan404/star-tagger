@@ -1,3 +1,4 @@
+<script setup>
 import { ref, onMounted } from 'vue'
 import { Plus, Trash2, Upload, MapPin, Sparkles, Loader2, Key, ExternalLink } from 'lucide-vue-next'
 

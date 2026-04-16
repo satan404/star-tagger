@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/astrometry/:path*",
-      "destination": "/api/astrometry-proxy"
+      "destination": "/api/astrometry-proxy?path=:path*"
     }
   ]
 }

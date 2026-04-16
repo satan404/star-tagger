@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 // 停用 Vercel 預設的 Body Parser，這對處理圖片上傳（multipart/form-data）至關重要
 export const config = {
@@ -8,9 +8,9 @@ export const config = {
 };
 
 export default function handler(req, res) {
-  // 解析目標 URL
-  const targetUrl = req.url.replace('/api/astrometry-proxy', '');
-  const destination = `https://nova.astrometry.net/api${targetUrl}`;
+  // 從查詢參數獲取路徑（配合 vercel.json 的 rewrite）
+  const { path: apiPath } = req.query;
+  const destination = `https://nova.astrometry.net/api/${apiPath || ''}`;
 
   const options = {
     method: req.method,

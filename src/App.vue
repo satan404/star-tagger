@@ -137,6 +137,15 @@ const scanImage = async () => {
     let retryJob = 0
     while (retryJob < 5) {
       const jobRes = await fetch(`/api/astrometry/jobs/${jobId}/annotations/`)
+      
+      // 容錯檢查：如果回傳非 200 (可能是因為數據尚未準備好或 404)，先不嘗試解析 JSON
+      if (!jobRes.ok) {
+        console.warn(`Annotations not ready yet (Status: ${jobRes.status}), retrying...`)
+        retryJob++
+        await new Promise(r => setTimeout(r, 3000))
+        continue
+      }
+
       const annotations = await jobRes.json()
       
       if (annotations.annotations && annotations.annotations.length > 0) {

@@ -9,12 +9,16 @@ export const config = {
 
 export default function handler(req, res) {
   // 從查詢參數獲取路徑
-  const { path: apiPath } = req.query;
-  // 核心策略：切換回 HTTP 協定，避開對端伺服器可能的 SSL/SNI 處理異常
+  let { path: apiPath } = req.query;
+  
+  // 關鍵修正：Vercel 會自動對 query 參數進行編碼 (例如 / 變成 %2F)
+  // 如果不手動解碼，轉發給 Astrometry.net 的 URL 會變成無效路徑，導致 404
+  if (apiPath) {
+    apiPath = decodeURIComponent(apiPath);
+  }
+
   const destination = `http://nova.astrometry.net/api/${apiPath || ''}`;
 
-  // 核心策略：極致簡化標頭，移除所有 Vercel 加入的 x-vercel-*, x-forwarded-* 等標頭
-  // 這些非標準標頭常導致舊型 Apache/Django 伺服器報錯 (500)
   const allowedHeaders = ['content-type', 'content-length', 'accept'];
   const filteredHeaders = {};
   
@@ -25,8 +29,13 @@ export default function handler(req, res) {
     }
   });
 
-  // 固定使用標準瀏覽器 User-Agent，避免被判定為機器人 (503)
+  // 固定使用標準瀏覽器 User-Agent
   filteredHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+  // 關鍵策略：官方文件規定，下載文件與標籤數據 (annotations) 時必須夾帶 Referer
+  if (apiPath && (apiPath.includes('jobs') || apiPath.includes('annotations'))) {
+    filteredHeaders['Referer'] = 'https://nova.astrometry.net/api/login';
+  }
 
   const options = {
     method: req.method,
@@ -42,9 +51,7 @@ export default function handler(req, res) {
 
   proxyReq.on('error', (e) => {
     console.error('Proxy Request Error:', e);
-    // 如果連 HTTP 都失敗，嘗試顯示更多資訊
-    const errorMsg = e.message || 'Unknown proxy error';
-    res.status(500).json({ error: 'Proxy failed', message: errorMsg, dest: destination });
+    res.status(500).json({ error: 'Proxy failed', message: e.message, dest: destination });
   });
 
   // 串流轉發請求體

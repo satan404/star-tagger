@@ -1,8 +1,5 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/astrometry/:path*",
-      "destination": "/api/astrometry-proxy?path=:path*"
-    }
-  ]
+  "github": {
+    "silent": true
+  }
 }
